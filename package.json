@@ -1,0 +1,49 @@
+{
+    "name": "rin-compiler",
+    "version": "0.0.0",
+    "description": "Compiler for parsing custom HTML 🤖",
+    "main": "./lib/index.js",
+    "types": "./lib/index.d.ts",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "test": "node ./test/compile.js"
+    },
+    "keywords": [
+        "rin",
+        "rin-compiler",
+        "compiler",
+        "html-compiler",
+        "embedded-js"
+    ],
+    "author": "Chalana Nethsara <wchalanaw@gmail.com>",
+    "contributors": [
+        {
+            "name": "Gehiru Damnidu",
+            "email": "gehirudm@pm.me"
+        },
+        {
+            "name": "Malindu Bandara",
+            "email": "malindubandara48@gmail.com"
+        }
+    ],
+    "license": "CC-BY-NC-SA-4.0",
+    "homepage": "https://github.com/ChalanaN/RiN",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ChalanaN/RiN.git"
+    },
+    "bugs": {
+        "email": "wchalanaw@gmail.com",
+        "url": "https://github.com/ChalanaN/RiN/issues"
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^17.0.16"
+    },
+    "dependencies": {
+        "typescript": "^4.7.0-dev.20220301"
+    }
+}
