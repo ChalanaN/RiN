@@ -4,6 +4,7 @@
     "description": "Compiler for parsing custom HTML 🤖",
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",
+    "bin": "./bin/rin.js",
     "type": "module",
     "scripts": {
         "build": "tsc",

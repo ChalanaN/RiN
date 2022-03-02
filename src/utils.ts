@@ -19,13 +19,13 @@ export const minifyHtml = (html: string): string => html.replace(/(\<\!--.*--\>|
  */
 export interface RiNCompilerOptions {
     /** Default title of the app */
-    title: string,
+    title?: string,
 
     /**
      * Minify the file?
      * @default true
      */
-    minify: boolean,
+    minify?: boolean,
 
     /** Can be accessible in the HTML file through the `App` tags */
     [x:string]: any
