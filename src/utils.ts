@@ -3,8 +3,36 @@ import RiNCompiler from "./compiler.js"
 
 /** Error codes used in {@link RiN} */
 export const ERRORS = {
+    COMPILER_NOT_READY: "Compiler is not ready yet, please listen for the 'ready' event",
     MAIN_VIEW_NOT_FOUND: "Couldn't find the main view of the app 😕",
-    FILE_NOT_FOUND: "Couldn't find the file 👀"
+    FILE_NOT_FOUND: "Couldn't find the file 👀",
+    UNCOUGHT: "An uncought error occured 😟",
+    Widgets: {
+        File: {
+            FILE_NOT_FOUND: "File accessed through the <File/> widjet could not be accessed."
+        }
+    }
+}
+
+/** Compiler defaults */
+export const DEFAULTS: { REGEXPS_FOR_TAGS: { [x: string]: RegExp }, COMPILER_OPTIONS: RiNCompilerOptions } = {
+    /** Regular Expressions used to find tags */
+    REGEXPS_FOR_TAGS: {
+        settings: /(?:<!--|\/\*).*<(Page\.([\w\.]*))>(.*)<\/Page.[\w\.]*>.*(?:-->|\*\/)/g,
+        appWidgets: /(?:<!--|\/\*).*<App\.([\w\.]*)\/>.*(?:-->|\*\/)/g,
+        functionalWidgets: /(?:<!--|\/\*).*<App\.([\w\.]*)>(.*)<\/App.[\w\.]*>.*(?:-->|\*\/)/g,
+        files: /(?:<!--|\/\*).*<File:([\w\.\/]*)\/>.*(?:-->|\*\/)/g,
+        imports: /(?:<!--|\/\*).*@Import (JS|CSS) \((.*)\).*(?:-->|\*\/)/g
+    },
+
+    /** Defaults for options of {@link RiNCompiler} */
+    COMPILER_OPTIONS: {
+        title: "Untitled",
+        minify: true,
+        AppWidgets: {},
+        FunctionalWidgets: { Run: eval },
+        CacheMaxAge: 60000
+    }
 }
 
 /**
@@ -27,8 +55,23 @@ export interface RiNCompilerOptions {
      */
     minify?: boolean,
 
-    /** Can be accessible in the HTML file through the `App` tags */
-    [x:string]: any
+    /**
+     * Max age of cached pages in milliseconds
+     * @default 60000
+     */
+    CacheMaxAge?: number,
+
+    /**
+     * Can be accessible in the HTML file through the `App` tags
+     * 
+     * As an example, if you are passing the value `{ AppWidgets: { Time: Date.now() } }` as the options parameter of RiNCompiler, you can access it in your HTML by using the `<App.Time/>` tag.
+     */
+    AppWidgets?: { [ x: string ]: any }
+
+    /**
+     * Run JavaScript inside your HTML.
+     */
+    FunctionalWidgets?: { [x: string]: (value: string) => string }
 }
 
 export interface RiNOptions extends RiNCompilerOptions {
@@ -78,10 +121,13 @@ export interface PageInfo {
      * `false` if the response is a cached page.
      * Refer to {@link cachedAt}  for the time the page has been cached.
      */
-    fresh?: boolean,
+    readonly fresh?: boolean,
 
     /**
      * Timestamp of when the page has been cached.
      */
-    cachedAt?: number
+    readonly cachedAt?: number
+    
+    /** Additional properties of the page */
+    [x: string]: any
 }

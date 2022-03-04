@@ -1,15 +1,23 @@
+import { EventEmitter } from "events";
 import { readFile } from "fs/promises";
-import { minifyHtml, PageInfo, RiNCompilerOptions } from "./utils.js";
+import { dirname, resolve } from "path";
+import { DEFAULTS, ERRORS, minifyHtml, PageInfo, RiNCompilerOptions } from "./utils.js";
 
 /**
  * Compiler for parsing custom HTML 🤖
+ * 
+ * @author ChalanaN <wchalanaw@gmail.com>
  */
-export default class RiNCompiler {
-    /**  */
-    AppView: string
-    Cache: { [x: string]: PageInfo };
-    CacheMaxAge: number;
-    private Tags: { settings: RegExp; components: RegExp; files: RegExp; imports: RegExp; scriptComponents: RegExp; scriptFiles: RegExp; };
+export default class RiNCompiler extends EventEmitter {
+    /** Main view of the app */
+    readonly AppView: string;
+    options: RiNCompilerOptions;
+
+    /** Pages cached by the compiler */
+    readonly Cache: { [x: string]: PageInfo };
+
+    /** Regular Expressions used for searching tags. DO NOT EDIT THIS UNTIL YOU KNOW WHAT YOU ARE DOING */
+    private TAGS: typeof DEFAULTS.REGEXPS_FOR_TAGS;
 
     /**
      * Creates a new compiler 🤖
@@ -17,78 +25,72 @@ export default class RiNCompiler {
      * @param {RiNCompilerOptions} [options] Options for the compiler
      */
     constructor(appView: string, options?: RiNCompilerOptions) {
+        super();
+
+        this.TAGS = DEFAULTS.REGEXPS_FOR_TAGS
+
         this.AppView = appView
-        this.Tags = {
-            settings: /(?:<!--|\/\*) <(Page\.[\w\.]*)>(.*)<\/Page.[\w\.]*> (?:-->|\*\/)/g,
-            components: /(?:<!--|\/\*) <(App\.[\w\.]*)\/> (?:-->|\*\/)/g,
-            files: /(?:<!--|\/\*) <File:([\w\.\/]*)\/> (?:-->|\*\/)/g,
-            imports: /(?:<!--|\/\*) @Import (JS|CSS) \((.*)\) (?:-->|\*\/)/g,
-            scriptComponents: /\/\* <(App\.[\w\.]*)\/> \*\//g,
-            scriptFiles: /\/\* <File:([\w\.\/]*)\/> \*\//g
-        }
+        this.options = { ...DEFAULTS.COMPILER_OPTIONS, ...options }
         this.Cache = {}
-        this.CacheMaxAge = options?.CacheMaxAge || 60000
-        
+
         // Cache the main view
         ;(async () => {
             try {
-                this.Cache.App = {
-                    title: options?.title,
-                    html: (await readFile(this.AppView)).toString(),
-                    cachedAt: Date.now()
-                }
-            } catch (error) {
-                console.error("🤖 Error: ", error)
-            }
+                this.Cache.App = { title: options?.title, html: (await readFile(this.AppView)).toString(), cachedAt: Date.now() }
+            } catch { return this.emit("error", new Error(ERRORS.MAIN_VIEW_NOT_FOUND)) }
+            this.emit("ready")
         })()
     }
 
     /**
      * Compiles the app 🔄
      * @param {string} page HTML cotent to be rendered
+     * @param {string} rootDir Root directory of the content. This is used for the `<File/>` widget.
      * @returns {Promise<PageInfo>}
      */
-    compile(page: string): Promise<PageInfo> {
-        return new Promise(async res => {
-            if (this.Cache?.[page] && (Date.now() - this.Cache[page].cachedAt) < this.CacheMaxAge) return res(this.Cache[page])
+    compile(page: string, rootDir?: string): Promise<PageInfo> {
+        // ⭕ TODO ⭕ Instead of throwing an error, consider waiting for the compiler to load
+        if (!this.Cache.App) throw new Error(ERRORS.COMPILER_NOT_READY)
 
-            var { html: Page, title: Title, imports: Imports } = this.renderPage(page)
-            var App = { html: this.Cache.App?.html || ((this.Cache.App = { title: "", html: (await readFile(this.AppView)).toString() }) && this.Cache.App?.html), Page, Title, Imports }
+        return new Promise(async (res) => {
+            // Check cache
+            if (this.Cache?.[page] && (Date.now() - this.Cache[page].cachedAt) < this.options.CacheMaxAge) return res(this.Cache[page])
 
-            /* Tags 🤖 */ {
-                var iterator, i
+            var { html: Page, title: Title, imports: Imports, ...additionalProperties } = this.renderPage(page)
+            var App = { html: this.Cache.App.html, Page, Title, Imports, ...additionalProperties, ...this.options.AppWidgets, ...this.options.FunctionalWidgets }
 
-                // Components 🤖
-                iterator = App.html.matchAll(this.Tags.components)
+            /* Widgets 🤖 */ {
+                var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
+
+                // App Widgets 🤖
+                iterator = App.html.matchAll(this.TAGS.appWidgets)
                 do {
                     i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], eval(i.value[1])))
+                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value[1]]))
                 } while (!i.done)
-
-                // Script Components 🤖
-                // iterator = App.html.matchAll(this.Tags.scriptComponents)
-                // do {
-                //     i = iterator.next()
-                //     !i.done && (App.html = App.html.replace(i.value[0], eval(i.value[1])))
-                // } while (!i.done)
+                
+                // Functional Widjets 🤖
+                iterator = App.html.matchAll(this.TAGS.functionalWidgets)
+                do {
+                    i = iterator.next()
+                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value[1]]?.(i.value[2])))
+                } while (!i.done)
 
                 // Files 🤖
-                iterator = App.html.matchAll(this.Tags.files)
-                do {
-                    i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], (await readFile(i.value[1])).toString()))
-                } while (!i.done)
-
-                // Script Files 🤖
-                // iterator = App.html.matchAll(this.Tags.scriptFiles)
-                // do {
-                //     i = iterator.next()
-                //     !i.done && (App.html = App.html.replace(i.value[0], (await readFile(i.value[1])).toString()))
-                // } while (!i.done)
+                iterator = App.html.matchAll(this.TAGS.files)
+                try {
+                    do {
+                        i = iterator.next()
+                        !i.done && (App.html = App.html.replace(i.value[0], (await readFile(resolve(rootDir || "", i.value[1]))).toString()))
+                    } while (!i.done)
+                } catch (err) { throw new Error(ERRORS.Widgets.File.FILE_NOT_FOUND.concat("\n", err)) }
             }
-            App.html = minifyHtml(App.html)
-            this.Cache[page] = { cachedAt: Date.now(), html: App.html, title: App.Title, fresh: false, imports: App.Imports }
-            setTimeout(() => (this.Cache[page] = undefined), this.CacheMaxAge)
+
+            // Minify the file if specified
+            this.options.minify && (App.html = minifyHtml(App.html))
+            // Cache the compiled page
+            this.Cache[page] = { cachedAt: Date.now(), fresh: false, html: App.html, title: App.Title, imports: App.Imports }
+
             res({ html: App.html, title: App.Title, imports: App.Imports })
         })
     }
@@ -100,23 +102,23 @@ export default class RiNCompiler {
      */
     renderPage(page: string): PageInfo {
         var Page: PageInfo = {
-            title: "Untitled",
+            title: this.options.title,
             imports: { js: [], css: [], jsTags: "", cssTags: "" },
             html: page
         }
 
-        /* Tags 🤖 */ {
+        /* Setting Tags 🤖 */ {
             var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
 
             // Settings 🤖
-            iterator = page.matchAll(this.Tags.settings)
+            iterator = page.matchAll(this.TAGS.settings)
             do {
                 i = iterator.next()
-                !i.done && eval(`${i.value[1]} = i.value[2]`)
+                !i.done && (Page[i.value[2]] = i.value[3])
             } while (!i.done)
 
             // Imports 📲
-            iterator = page.matchAll(this.Tags.imports)
+            iterator = page.matchAll(this.TAGS.imports)
             do {
                 i = iterator.next()
                 !i.done && Page.imports[i.value[1]].push(i.value[2])
@@ -126,7 +128,7 @@ export default class RiNCompiler {
         Page.imports.cssTags = Page.imports.css.map(url => `<link rel="stylesheet" href="${url}" class="imports">`).join("")
         Page.imports.jsTags = Page.imports.js.map(url => `<script src="${url}" class="imports"></script>`).join("")
 
-        Page.html = minifyHtml(page)
+        Page.html = page
         return Page
     }
 }

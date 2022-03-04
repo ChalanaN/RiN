@@ -1,7 +1,21 @@
 /** Error codes used in {@link RiN} */
 export declare const ERRORS: {
+    COMPILER_NOT_READY: string;
     MAIN_VIEW_NOT_FOUND: string;
     FILE_NOT_FOUND: string;
+    UNCOUGHT: string;
+    Widgets: {
+        File: {
+            FILE_NOT_FOUND: string;
+        };
+    };
+};
+/** Compiler defaults */
+export declare const DEFAULTS: {
+    REGEXPS_FOR_TAGS: {
+        [x: string]: RegExp;
+    };
+    COMPILER_OPTIONS: RiNCompilerOptions;
 };
 /**
  * Minify HTML 🗜
@@ -14,14 +28,31 @@ export declare const minifyHtml: (html: string) => string;
  */
 export interface RiNCompilerOptions {
     /** Default title of the app */
-    title: string;
+    title?: string;
     /**
      * Minify the file?
      * @default true
      */
-    minify: boolean;
-    /** Can be accessible in the HTML file through the `App` tags */
-    [x: string]: any;
+    minify?: boolean;
+    /**
+     * Max age of cached pages in milliseconds
+     * @default 60000
+     */
+    CacheMaxAge?: number;
+    /**
+     * Can be accessible in the HTML file through the `App` tags
+     *
+     * As an example, if you are passing the value `{ AppWidgets: { Time: Date.now() } }` as the options parameter of RiNCompiler, you can access it in your HTML by using the `<App.Time/>` tag.
+     */
+    AppWidgets?: {
+        [x: string]: any;
+    };
+    /**
+     * Run JavaScript inside your HTML.
+     */
+    FunctionalWidgets?: {
+        [x: string]: (value: string) => string;
+    };
 }
 export interface RiNOptions extends RiNCompilerOptions {
     /** Path to the out directory. Will be created if doesn't exist. */
@@ -66,9 +97,11 @@ export interface PageInfo {
      * `false` if the response is a cached page.
      * Refer to {@link cachedAt}  for the time the page has been cached.
      */
-    fresh?: boolean;
+    readonly fresh?: boolean;
     /**
      * Timestamp of when the page has been cached.
      */
-    cachedAt?: number;
+    readonly cachedAt?: number;
+    /** Additional properties of the page */
+    [x: string]: any;
 }

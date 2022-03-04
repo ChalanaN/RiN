@@ -25,13 +25,17 @@ export default async function RiN(srcDir: string, files: string[] | "all" = "all
 
     const compiler: RiNCompiler = new RiNCompiler(appView, options)
 
-    // Get rid of type "all" as the files parameter 🚫
-    "all"==files&&(files=(await readdir(srcDir)).filter(f=>/\.html$/.test(f)&&"App.html"!=f))
+    compiler.on("ready", async () =>{
+        // Get rid of type "all" as the files parameter 🚫
+        "all"==files&&(files=(await readdir(srcDir)).filter(f=>/\.html$/.test(f)&&"App.html"!=f))
 
-    files.map(async f => {
-        let file = await readFile(path.resolve(srcDir, f))
-        await writeFile(path.resolve(options?.outDir || srcDir, f), (await compiler.compile(file.toString())).html)
+        // Compile the files
+        files.map(async f => {
+            let file = await readFile(path.resolve(srcDir, f))
+            await writeFile(path.resolve(options?.outDir || srcDir, f), (await compiler.compile(file.toString())).html)
+        })
     })
+    
 }
 
 export const Compiler = RiNCompiler
