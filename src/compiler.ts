@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { readFile } from "fs/promises";
-import { dirname, resolve } from "path";
+import { resolve } from "path";
 import { DEFAULTS, ERRORS, minifyHtml, PageInfo, RiNCompilerOptions } from "./utils.js";
 
 /**
@@ -44,7 +44,7 @@ export default class RiNCompiler extends EventEmitter {
 
     /**
      * Compiles the app 🔄
-     * @param {string} page HTML cotent to be rendered
+     * @param {string} page HTML content to be rendered
      * @param {string} rootDir Root directory of the content. This is used for the `<File/>` widget.
      * @returns {Promise<PageInfo>}
      */
@@ -69,7 +69,7 @@ export default class RiNCompiler extends EventEmitter {
                     !i.done && (App.html = App.html.replace(i.value[0], App[i.value[1]]))
                 } while (!i.done)
                 
-                // Functional Widjets 🤖
+                // Functional Widgets 🤖
                 iterator = App.html.matchAll(this.TAGS.functionalWidgets)
                 do {
                     i = iterator.next()

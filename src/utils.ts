@@ -6,10 +6,10 @@ export const ERRORS = {
     COMPILER_NOT_READY: "Compiler is not ready yet, please listen for the 'ready' event",
     MAIN_VIEW_NOT_FOUND: "Couldn't find the main view of the app 😕",
     FILE_NOT_FOUND: "Couldn't find the file 👀",
-    UNCOUGHT: "An uncought error occured 😟",
+    UNCAUGHT: "An uncaught error occurred 😟",
     Widgets: {
         File: {
-            FILE_NOT_FOUND: "File accessed through the <File/> widjet could not be accessed."
+            FILE_NOT_FOUND: "File accessed through the <File/> widget wasn't accessible."
         }
     }
 }
