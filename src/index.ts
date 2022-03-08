@@ -1,8 +1,7 @@
-import * as fs from "fs"
 import * as path from "path"
-import { access, readdir, readFile, writeFile } from "fs/promises"
+import { readdir, readFile, writeFile } from "fs/promises"
 import RiNCompiler from "./compiler.js"
-import { ERRORS, RiNOptions } from "./common.js"
+import { RiNOptions } from "./common.js"
 
 /**
  * Compiles all the files or selected files in a folder 💾
@@ -15,27 +14,30 @@ import { ERRORS, RiNOptions } from "./common.js"
  * @param {RiNOptions} [options] Additional options for the compiler
  */
 export default async function RiN(srcDir: string, files: string[] | "all" = "all", appView?: string | "default", options?: RiNOptions) {
-    // Checking for appView 👀
-    appView = await (async () => {
-        if (appView && "default" != appView && await access(path.resolve(srcDir, appView), fs.constants.R_OK).catch(() => false)) return path.resolve(srcDir, appView)
-        if (!await access(path.resolve(srcDir, "views/App.html"), fs.constants.R_OK).catch(() => true)) return path.resolve(srcDir, "views/App.html")
-        if (!await access(path.resolve(srcDir, "App.html"), fs.constants.R_OK).catch(() => true)) return path.resolve(srcDir, "App.html")
-        throw new Error(ERRORS.MAIN_VIEW_NOT_FOUND)
-    })()
+    var times = []
+    const log = (msg: string) => times.push(performance.now()) && console.log(`[${times.at(-1)}] ${msg}`)
+    log("Starting RiN 🤖")
 
     const compiler: RiNCompiler = new RiNCompiler(srcDir, "default", options)
 
-    compiler.on("ready", async () =>{
+    compiler.on("ready", async () => {
+        log(`Compiler is ready in ${performance.now() - times.at(-1)}`)
+
         // Get rid of type "all" as the files parameter 🚫
         "all"==files&&(files=(await readdir(srcDir)).filter(f=>/\.html$/.test(f)&&"App.html"!=f))
 
+        log(`Starting compiling the files after ${performance.now() - times.at(-1)}`)
+
         // Compile the files
-        files.map(async f => {
+        await Promise.all(files.map(async (f) => {
+            log(`Compiling file : ${f}`)
             let file = await readFile(path.resolve(srcDir, f))
             await writeFile(path.resolve(options?.outDir || srcDir, f), (await compiler.compile(file.toString())).html)
-        })
+            log(`Done compiling : ${f} : ${performance.now() - times.at(-1)}`)
+        }))
+
+        log(`Done compiling in ${performance.now() - times[0]} milliseconds`)
     })
-    
 }
 
 export const Compiler = RiNCompiler

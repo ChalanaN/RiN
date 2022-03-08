@@ -2,12 +2,13 @@
     .popup {
         position: fixed;
         inset: 0;
-        display: flex;
+        display: none;
         align-items: center;
         justify-content: center;
         background-color: rgba(255, 255, 255, .2);
         backdrop-filter: blur(24px);
     }
+    .popup.show { display: flex; }
     .popup div {
         background-color: rgba(255, 255, 255, .7);
         border-radius: 24px;
@@ -16,9 +17,9 @@
     }
 </style>
 
-<div class="popup">
+<div class="popup show" onclick="this.classList.remove('show')">
     <div>
-        <h1><!-- <Component.title/> --></h1>
+        <h1 style="margin-top: 0;"><!-- <Component.title/> --></h1>
         <p><!-- <Component.description/> --></p>
         <!-- <Component.Run>eval(Component.buttons)?.map(b=>`<button${b.lessFocus?" class='less-focus'":""}>${b.text}</button>`).join("")</Component.Run> -->
     </div>
