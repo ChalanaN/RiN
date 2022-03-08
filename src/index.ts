@@ -2,7 +2,7 @@ import * as fs from "fs"
 import * as path from "path"
 import { access, readdir, readFile, writeFile } from "fs/promises"
 import RiNCompiler from "./compiler.js"
-import { ERRORS, RiNOptions } from "./utils.js"
+import { ERRORS, RiNOptions } from "./common.js"
 
 /**
  * Compiles all the files or selected files in a folder 💾
@@ -23,7 +23,7 @@ export default async function RiN(srcDir: string, files: string[] | "all" = "all
         throw new Error(ERRORS.MAIN_VIEW_NOT_FOUND)
     })()
 
-    const compiler: RiNCompiler = new RiNCompiler(appView, options)
+    const compiler: RiNCompiler = new RiNCompiler(srcDir, "default", options)
 
     compiler.on("ready", async () =>{
         // Get rid of type "all" as the files parameter 🚫

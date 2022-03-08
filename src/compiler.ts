@@ -1,7 +1,9 @@
 import { EventEmitter } from "events";
-import { readFile } from "fs/promises";
+import * as fs from "fs";
+import { access, readdir, readFile } from "fs/promises";
 import { resolve } from "path";
-import { DEFAULTS, ERRORS, minifyHtml, PageInfo, RiNCompilerOptions } from "./utils.js";
+import { Component, DEFAULTS, ERRORS, PageInfo, RiNCompilerOptions } from "./common.js";
+import { minifyHtml, parseAttributes } from "./utils.js";
 
 /**
  * Compiler for parsing custom HTML 🤖
@@ -9,35 +11,54 @@ import { DEFAULTS, ERRORS, minifyHtml, PageInfo, RiNCompilerOptions } from "./ut
  * @author ChalanaN <wchalanaw@gmail.com>
  */
 export default class RiNCompiler extends EventEmitter {
-    /** Main view of the app */
-    readonly AppView: string;
+    /** Source directory of the app. All other relative paths passed to the compiler will be relative to this */
+    readonly srcDir: string;
     options: RiNCompilerOptions;
 
     /** Pages cached by the compiler */
     readonly Cache: { [x: string]: PageInfo };
+    /** Components cached by the compiler */
+    readonly Components: { [x: string]: Component };
 
     /** Regular Expressions used for searching tags. DO NOT EDIT THIS UNTIL YOU KNOW WHAT YOU ARE DOING */
-    private TAGS: typeof DEFAULTS.REGEXPS_FOR_TAGS;
+    #TAGS: typeof DEFAULTS.REGEXPS_FOR_TAGS;
 
     /**
      * Creates a new compiler 🤖
      * @param {string} appView Path to the main view of the app. All other pages are compiled inside this view.
      * @param {RiNCompilerOptions} [options] Options for the compiler
      */
-    constructor(appView: string, options?: RiNCompilerOptions) {
+    constructor(srcDir: string, appView?: "default" | string, options?: RiNCompilerOptions) {
         super();
 
-        this.TAGS = DEFAULTS.REGEXPS_FOR_TAGS
+        this.#TAGS = DEFAULTS.REGEXPS_FOR_TAGS
 
-        this.AppView = appView
+        this.srcDir = srcDir
         this.options = { ...DEFAULTS.COMPILER_OPTIONS, ...options }
         this.Cache = {}
+        this.Components = {}
 
-        // Cache the main view
         ;(async () => {
-            try {
-                this.Cache.App = { title: options?.title, html: (await readFile(this.AppView)).toString(), cachedAt: Date.now() }
-            } catch { return this.emit("error", new Error(ERRORS.MAIN_VIEW_NOT_FOUND)) }
+            // Find the app view
+            appView = await (async () => {
+                if (appView && "default" != appView && await access(resolve(srcDir, appView), fs.constants.R_OK).catch(() => false)) return resolve(srcDir, appView)
+                if (!await access(resolve(srcDir, "views/App.html"), fs.constants.R_OK).catch(() => true)) return resolve(srcDir, "views/App.html")
+                if (!await access(resolve(srcDir, "App.html"), fs.constants.R_OK).catch(() => true)) return resolve(srcDir, "App.html")
+                throw new Error(ERRORS.MAIN_VIEW_NOT_FOUND)
+            })()
+
+            await Promise.all([
+                // Cache the app view
+                (async () => {
+                    try {
+                        this.Cache.App = { title: options?.title, html: (await readFile(appView)).toString(), cachedAt: Date.now() }
+                    } catch { return this.emit("error", new Error(ERRORS.MAIN_VIEW_NOT_FOUND)) }
+                })(),
+
+                // Load components
+                (async () => { try { (await readdir(resolve(srcDir, "components"))).filter(v=>v.endsWith(".html")).map(v=>v.slice(0, v.length-5)).forEach(async v => (this.Components[v] = { html: (await readFile(resolve(srcDir, "components", v+".html"))).toString() })) } catch {} })()
+            ])
+
             this.emit("ready")
         })()
     }
@@ -48,7 +69,7 @@ export default class RiNCompiler extends EventEmitter {
      * @param {string} rootDir Root directory of the content. This is used for the `<File/>` widget.
      * @returns {Promise<PageInfo>}
      */
-    compile(page: string, rootDir?: string): Promise<PageInfo> {
+    compile(page: string): Promise<PageInfo> {
         // ⭕ TODO ⭕ Instead of throwing an error, consider waiting for the compiler to load
         if (!this.Cache.App) throw new Error(ERRORS.COMPILER_NOT_READY)
 
@@ -63,27 +84,34 @@ export default class RiNCompiler extends EventEmitter {
                 var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
 
                 // App Widgets 🤖
-                iterator = App.html.matchAll(this.TAGS.appWidgets)
+                iterator = App.html.matchAll(this.#TAGS.appWidgets)
                 do {
                     i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value[1]]))
-                } while (!i.done)
-                
-                // Functional Widgets 🤖
-                iterator = App.html.matchAll(this.TAGS.functionalWidgets)
-                do {
-                    i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value[1]]?.(i.value[2])))
+                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value.groups.property] || ""))
                 } while (!i.done)
 
-                // Files 🤖
-                iterator = App.html.matchAll(this.TAGS.files)
+                // Functional Widgets 🤖
+                iterator = App.html.matchAll(this.#TAGS.functionalWidgets)
+                do {
+                    i = iterator.next()
+                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value.groups.property]?.(i.value.groups.value) || ""))
+                } while (!i.done)
+
+                // Files Widget 🤖
+                iterator = App.html.matchAll(this.#TAGS.files)
                 try {
                     do {
                         i = iterator.next()
-                        !i.done && (App.html = App.html.replace(i.value[0], (await readFile(resolve(rootDir || "", i.value[1]))).toString()))
+                        !i.done && (App.html = App.html.replace(i.value[0], (await readFile(resolve(this.srcDir, i.value.groups.filepath))).toString()))
                     } while (!i.done)
                 } catch (err) { throw new Error(ERRORS.Widgets.File.FILE_NOT_FOUND.concat("\n", err)) }
+
+                // Components 🤖
+                iterator = App.html.matchAll(this.#TAGS.components)
+                do {
+                    i = iterator.next()
+                    !i.done && (App.html = App.html.replace(i.value[0], this.Components[i.value.groups.name] ? this.renderComponent(this.Components[i.value.groups.name].html, parseAttributes(i.value.groups.attributes)).html : ""))
+                } while (!i.done)
             }
 
             // Minify the file if specified
@@ -91,44 +119,77 @@ export default class RiNCompiler extends EventEmitter {
             // Cache the compiled page
             this.Cache[page] = { cachedAt: Date.now(), fresh: false, html: App.html, title: App.Title, imports: App.Imports }
 
-            res({ html: App.html, title: App.Title, imports: App.Imports })
+            res({ html: App.html, title: App.Title, imports: App.Imports, fresh: true })
         })
     }
 
     /**
      * Compiles a page
-     * @param {string} page Content of the page
+     * @param {string} html Content of the page
      * @returns {PageInfo}
      */
-    renderPage(page: string): PageInfo {
+    renderPage(html: string): PageInfo {
         var Page: PageInfo = {
             title: this.options.title,
             imports: { js: [], css: [], jsTags: "", cssTags: "" },
-            html: page
+            html
         }
 
-        /* Setting Tags 🤖 */ {
+        /* Setting Widgets 🤖 */ {
             var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
 
             // Settings 🤖
-            iterator = page.matchAll(this.TAGS.settings)
+            iterator = html.matchAll(this.#TAGS.settings)
             do {
                 i = iterator.next()
-                !i.done && (Page[i.value[2]] = i.value[3])
+                !i.done && (Page[i.value.groups.property] = i.value.groups.value) && (Page.html = Page.html.replace(i.value[0], ""))
             } while (!i.done)
-
+            
             // Imports 📲
-            iterator = page.matchAll(this.TAGS.imports)
+            iterator = html.matchAll(this.#TAGS.imports)
             do {
                 i = iterator.next()
-                !i.done && Page.imports[i.value[1]].push(i.value[2])
+                !i.done && Page.imports[i.value[1]].push(i.value[2]) && (Page.html = Page.html.replace(i.value[0], ""))
             } while (!i.done)
         }
 
         Page.imports.cssTags = Page.imports.css.map(url => `<link rel="stylesheet" href="${url}" class="imports">`).join("")
         Page.imports.jsTags = Page.imports.js.map(url => `<script src="${url}" class="imports"></script>`).join("")
 
-        Page.html = page
         return Page
+    }
+
+    /**
+     * Renders a component
+     * @param {string} html HTML content of the component
+     * @param {{ [x: string]: string | ((value: string, component: Component) => string) }} widgets Parameters passed to the component
+     * @returns {Component} Rendered component
+     */
+    renderComponent(html: string, widgets: { [x: string]: string | ((value: string, component: Component) => string) }): Component {
+        var component: Component = {
+            html,
+            Run: (v: string, c: Component) => eval(`const Component = ${JSON.stringify(c)};${v}`),
+            ...widgets
+        }
+
+        /* Widgets 🤖 */ {
+            var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
+
+            // Component Widgets 🤖
+            iterator = component.html.matchAll(this.#TAGS.componentWidgets)
+            do {
+                i = iterator.next()
+                !i.done && (component.html = component.html.replace(i.value[0], component[i.value[1]] || ""))
+            } while (!i.done)
+
+            // Component Functional Widgets 🤖
+            iterator = component.html.matchAll(this.#TAGS.componentFunctionalWidgets)
+            do {
+                i = iterator.next()
+                !i.done && (component.html = component.html.replace(i.value[0], component[i.value.groups.property]?.(i.value.groups.value, component) || ""))
+            } while (!i.done)
+        }
+
+        return component
     }
 }

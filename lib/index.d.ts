@@ -1,5 +1,5 @@
 import RiNCompiler from "./compiler.js";
-import { RiNOptions } from "./utils.js";
+import { RiNOptions } from "./common.js";
 /**
  * Compiles all the files or selected files in a folder 💾
  *
