@@ -45,7 +45,7 @@ export interface RiNCompilerOptions {
      * Run JavaScript inside your HTML.
      */
     FunctionalWidgets?: {
-        [x: string]: (value: string) => string;
+        [x: string]: (value: string, App: PageInfo) => string;
     };
 }
 export interface RiNOptions extends RiNCompilerOptions {

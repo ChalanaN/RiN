@@ -33,7 +33,7 @@ export const DEFAULTS: { REGEXPS_FOR_TAGS: { [x: string]: RegExp }, COMPILER_OPT
         title: "Untitled",
         minify: true,
         AppWidgets: {},
-        FunctionalWidgets: { Run: eval },
+        FunctionalWidgets: { Run: (v, App) => eval(v) },
         CacheMaxAge: 60000
     }
 }
@@ -68,7 +68,7 @@ export interface RiNCompilerOptions {
     /**
      * Run JavaScript inside your HTML.
      */
-    FunctionalWidgets?: { [x: string]: (value: string) => string }
+    FunctionalWidgets?: { [x: string]: (value: string, App: PageInfo) => string }
 }
 
 export interface RiNOptions extends RiNCompilerOptions {

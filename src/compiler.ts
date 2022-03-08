@@ -66,7 +66,6 @@ export default class RiNCompiler extends EventEmitter {
     /**
      * Compiles the app 🔄
      * @param {string} page HTML content to be rendered
-     * @param {string} rootDir Root directory of the content. This is used for the `<File/>` widget.
      * @returns {Promise<PageInfo>}
      */
     compile(page: string): Promise<PageInfo> {
@@ -94,7 +93,7 @@ export default class RiNCompiler extends EventEmitter {
                 iterator = App.html.matchAll(this.#TAGS.functionalWidgets)
                 do {
                     i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value.groups.property]?.(i.value.groups.value) || ""))
+                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value.groups.property]?.(i.value.groups.value, App) || ""))
                 } while (!i.done)
 
                 // Files Widget 🤖
@@ -144,7 +143,7 @@ export default class RiNCompiler extends EventEmitter {
                 i = iterator.next()
                 !i.done && (Page[i.value.groups.property] = i.value.groups.value) && (Page.html = Page.html.replace(i.value[0], ""))
             } while (!i.done)
-            
+
             // Imports 📲
             iterator = html.matchAll(this.#TAGS.imports)
             do {
@@ -168,7 +167,7 @@ export default class RiNCompiler extends EventEmitter {
     renderComponent(html: string, widgets: { [x: string]: string | ((value: string, component: Component) => string) }): Component {
         var component: Component = {
             html,
-            Run: (v: string, c: Component) => eval(`const Component = ${JSON.stringify(c)};${v}`),
+            Run: (v: string, Component: Component) => eval(v),
             ...widgets
         }
 

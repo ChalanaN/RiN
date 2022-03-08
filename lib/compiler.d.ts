@@ -28,7 +28,6 @@ export default class RiNCompiler extends EventEmitter {
     /**
      * Compiles the app 🔄
      * @param {string} page HTML content to be rendered
-     * @param {string} rootDir Root directory of the content. This is used for the `<File/>` widget.
      * @returns {Promise<PageInfo>}
      */
     compile(page: string): Promise<PageInfo>;
