@@ -38,13 +38,13 @@ export interface RiNCompilerOptions {
      *
      * As an example, if you are passing the value `{ AppWidgets: { Time: Date.now() } }` as the options parameter of RiNCompiler, you can access it in your HTML by using the `<App.Time/>` tag.
      */
-    AppWidgets?: {
+    appWidgets?: {
         [x: string]: any;
     };
     /**
      * Run JavaScript inside your HTML.
      */
-    FunctionalWidgets?: {
+    functionalWidgets?: {
         [x: string]: (value: string, App: PageInfo) => string;
     };
 }

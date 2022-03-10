@@ -77,7 +77,7 @@ export default class RiNCompiler extends EventEmitter {
             if (this.Cache?.[page] && (Date.now() - this.Cache[page].cachedAt) < this.options.CacheMaxAge) return res(this.Cache[page])
 
             var { html: Page, title: Title, imports: Imports, ...additionalProperties } = this.renderPage(page)
-            var App = { html: this.Cache.App.html, Page, Title, Imports, ...additionalProperties, ...this.options.AppWidgets, ...this.options.FunctionalWidgets }
+            var App = { html: this.Cache.App.html, Page, Title, Imports, ...additionalProperties, ...this.options.appWidgets, ...this.options.functionalWidgets }
 
             /* Widgets 🤖 */ {
                 var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>

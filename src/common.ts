@@ -32,8 +32,8 @@ export const DEFAULTS: { REGEXPS_FOR_TAGS: { [x: string]: RegExp }, COMPILER_OPT
     COMPILER_OPTIONS: {
         title: "Untitled",
         minify: true,
-        AppWidgets: {},
-        FunctionalWidgets: { Run: (v, App) => eval(v) },
+        appWidgets: {},
+        functionalWidgets: { Run: (v, App) => eval(v) },
         CacheMaxAge: 60000
     }
 }
@@ -63,12 +63,12 @@ export interface RiNCompilerOptions {
      * 
      * As an example, if you are passing the value `{ AppWidgets: { Time: Date.now() } }` as the options parameter of RiNCompiler, you can access it in your HTML by using the `<App.Time/>` tag.
      */
-    AppWidgets?: { [ x: string ]: any }
+    appWidgets?: { [ x: string ]: any }
 
     /**
      * Run JavaScript inside your HTML.
      */
-    FunctionalWidgets?: { [x: string]: (value: string, App: PageInfo) => string }
+    functionalWidgets?: { [x: string]: (value: string, App: PageInfo) => string }
 }
 
 export interface RiNOptions extends RiNCompilerOptions {

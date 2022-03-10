@@ -1,5 +1,5 @@
 import RiNCompiler from "./compiler.js";
-import { RiNOptions } from "./common.js";
+import { RiNOptions, PageInfo } from "./common.js";
 /**
  * Compiles all the files or selected files in a folder 💾
  *
@@ -12,3 +12,4 @@ import { RiNOptions } from "./common.js";
  */
 export default function RiN(srcDir: string, files?: string[] | "all", appView?: string | "default", options?: RiNOptions): Promise<void>;
 export declare const Compiler: typeof RiNCompiler;
+export declare type CompiledPageInfo = PageInfo;

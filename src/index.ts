@@ -1,7 +1,7 @@
 import * as path from "path"
 import { readdir, readFile, writeFile } from "fs/promises"
 import RiNCompiler from "./compiler.js"
-import { RiNOptions } from "./common.js"
+import { RiNOptions, PageInfo } from "./common.js"
 
 /**
  * Compiles all the files or selected files in a folder 💾
@@ -18,7 +18,7 @@ export default async function RiN(srcDir: string, files: string[] | "all" = "all
     const log = (msg: string) => times.push(performance.now()) && console.log(`[${times.at(-1)}] ${msg}`)
     log("Starting RiN 🤖")
 
-    const compiler: RiNCompiler = new RiNCompiler(srcDir, "default", options)
+    const compiler: RiNCompiler = new RiNCompiler(srcDir, appView, options)
 
     compiler.on("ready", async () => {
         log(`Compiler is ready in ${performance.now() - times.at(-1)}`)
@@ -41,3 +41,4 @@ export default async function RiN(srcDir: string, files: string[] | "all" = "all
 }
 
 export const Compiler = RiNCompiler
+export type CompiledPageInfo = PageInfo
