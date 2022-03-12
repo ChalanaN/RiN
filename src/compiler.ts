@@ -82,18 +82,18 @@ export default class RiNCompiler extends EventEmitter {
             /* Widgets 🤖 */ {
                 var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
 
-                // App Widgets 🤖
+                // App Widgets and Custom Widgets 🤖
                 iterator = App.html.matchAll(this.#TAGS.appWidgets)
                 do {
                     i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value.groups.property] || ""))
+                    try { !i.done && (App.html = App.html.replace(i.value[0], (i.value.groups.property.includes(".") ? eval(`App.${i.value.groups.property}`) : App[i.value.groups.property]) || "")) } catch { App.html = App.html.replace(i.value[0], App[i.value.groups.property] || "") }
                 } while (!i.done)
 
                 // Functional Widgets 🤖
                 iterator = App.html.matchAll(this.#TAGS.functionalWidgets)
                 do {
                     i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], App[i.value.groups.property]?.(i.value.groups.value, App) || ""))
+                    try { !i.done && (App.html = App.html.replace(i.value[0], (i.value.groups.property.includes(".") ? eval(`App.${i.value.groups.property}`) : App[i.value.groups.property])?.(i.value.groups.value, App) || "")) } catch {}
                 } while (!i.done)
 
                 // Files Widget 🤖
@@ -103,7 +103,7 @@ export default class RiNCompiler extends EventEmitter {
                         i = iterator.next()
                         !i.done && (App.html = App.html.replace(i.value[0], (await readFile(resolve(this.srcDir, i.value.groups.filepath))).toString()))
                     } while (!i.done)
-                } catch (err) { throw new Error(ERRORS.Widgets.File.FILE_NOT_FOUND.concat("\n", err)) }
+                } catch (err) { throw new Error(ERRORS.Widgets.File.FILE_NOT_FOUND.concat("\n\n", err)) }
 
                 // Components 🤖
                 iterator = App.html.matchAll(this.#TAGS.components)
@@ -134,7 +134,7 @@ export default class RiNCompiler extends EventEmitter {
             html
         }
 
-        /* Setting Widgets 🤖 */ {
+        /* Declare Widgets 🤖 */ {
             var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
 
             // Widgets 🤖
@@ -148,7 +148,7 @@ export default class RiNCompiler extends EventEmitter {
             iterator = html.matchAll(this.#TAGS.imports)
             do {
                 i = iterator.next()
-                !i.done && Page.imports[i.value[1]].push(i.value[2]) && (Page.html = Page.html.replace(i.value[0], ""))
+                !i.done && Page.imports[i.value[1].toLowerCase()].push(i.value[2]) && (Page.html = Page.html.replace(i.value[0], ""))
             } while (!i.done)
         }
 
@@ -178,14 +178,14 @@ export default class RiNCompiler extends EventEmitter {
             iterator = component.html.matchAll(this.#TAGS.componentWidgets)
             do {
                 i = iterator.next()
-                !i.done && (component.html = component.html.replace(i.value[0], component[i.value[1]] || ""))
+                try { !i.done && (component.html = component.html.replace(i.value[0], i.value.groups.property.includes(".") ? eval(`component.${i.value.groups.property}`) : component[i.value.groups.property] || "")) } catch {}
             } while (!i.done)
 
             // Component Functional Widgets 🤖
             iterator = component.html.matchAll(this.#TAGS.componentFunctionalWidgets)
             do {
                 i = iterator.next()
-                !i.done && (component.html = component.html.replace(i.value[0], component[i.value.groups.property]?.(i.value.groups.value, component) || ""))
+                try { !i.done && (component.html = component.html.replace(i.value[0], (i.value.groups.property.includes(".") ? eval(`component.${i.value.groups.property}`) : component[i.value.groups.property])?.(i.value.groups.value, component) || "")) } catch {}
             } while (!i.done)
         }
 
