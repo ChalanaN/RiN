@@ -3,6 +3,3 @@ node_modules/
 # Files used for development
 .vscode/
 .markdownlint.json
-
-# Directory used for testing
-test/

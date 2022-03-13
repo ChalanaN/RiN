@@ -1,0 +1,11 @@
+{
+    "exclude": [],
+    "compilerOptions": {
+        "inlineSourceMap": true,
+        "module": "ES2020",
+        "moduleResolution": "Node",
+        "target": "ES2020",
+        "outDir": ".",
+        "declaration": false
+    }
+}

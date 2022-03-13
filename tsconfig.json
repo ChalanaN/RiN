@@ -1,4 +1,6 @@
 {
+    "exclude": ["test/*"],
+    "include": ["src/*"],
     "compilerOptions": {
         "outDir": "./lib",
         "declaration": true,

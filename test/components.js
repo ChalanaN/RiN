@@ -1,0 +1,17 @@
+import { parseAttributes } from "../lib/utils.js";
+import { compiler, TAGS, testsInfo } from "./index.js";
+import { headingLog, matchObjects, testLog } from "./utils.js";
+export const componentAttributes = () => {
+    let { input, output } = testsInfo.components.attributes, { attributes } = TAGS.components.exec(input).groups, parsedAttributes = parseAttributes(attributes);
+    testLog(matchObjects(output, parsedAttributes) === 1, "Attributes", matchObjects(output, parsedAttributes) * 100);
+};
+export const componentFunctionalWidgets = () => {
+    let { input, output } = testsInfo.components.functionalWidgets, component = compiler.renderComponent(input, {});
+    testLog(component.html === output, "Component Functional Widgets");
+};
+export default async () => {
+    headingLog("Components");
+    componentAttributes();
+    componentFunctionalWidgets();
+};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY29tcG9uZW50cy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbImNvbXBvbmVudHMudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEsT0FBTyxFQUFFLGVBQWUsRUFBRSxNQUFNLGlCQUFpQixDQUFDO0FBQ2xELE9BQU8sRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLFNBQVMsRUFBRSxNQUFNLFlBQVksQ0FBQztBQUN2RCxPQUFPLEVBQUUsVUFBVSxFQUFFLFlBQVksRUFBRSxPQUFPLEVBQUUsTUFBTSxZQUFZLENBQUM7QUFFL0QsTUFBTSxDQUFDLE1BQU0sbUJBQW1CLEdBQUcsR0FBRyxFQUFFO0lBQ3BDLElBQUksRUFBRSxLQUFLLEVBQUUsTUFBTSxFQUFFLEdBQUcsU0FBUyxDQUFDLFVBQVUsQ0FBQyxVQUFVLEVBQ25ELEVBQUUsVUFBVSxFQUFFLEdBQUcsSUFBSSxDQUFDLFVBQVUsQ0FBQyxJQUFJLENBQUMsS0FBSyxDQUFDLENBQUMsTUFBTSxFQUNuRCxnQkFBZ0IsR0FBRyxlQUFlLENBQUMsVUFBVSxDQUFDLENBQUE7SUFFbEQsT0FBTyxDQUFDLFlBQVksQ0FBQyxNQUFNLEVBQUUsZ0JBQWdCLENBQUMsS0FBSyxDQUFDLEVBQUUsWUFBWSxFQUFFLFlBQVksQ0FBQyxNQUFNLEVBQUUsZ0JBQWdCLENBQUMsR0FBQyxHQUFHLENBQUMsQ0FBQTtBQUNuSCxDQUFDLENBQUE7QUFFRCxNQUFNLENBQUMsTUFBTSwwQkFBMEIsR0FBRyxHQUFHLEVBQUU7SUFDM0MsSUFBSSxFQUFFLEtBQUssRUFBRSxNQUFNLEVBQUUsR0FBRyxTQUFTLENBQUMsVUFBVSxDQUFDLGlCQUFpQixFQUMxRCxTQUFTLEdBQUcsUUFBUSxDQUFDLGVBQWUsQ0FBQyxLQUFLLEVBQUUsRUFBRSxDQUFDLENBQUE7SUFFbkQsT0FBTyxDQUFDLFNBQVMsQ0FBQyxJQUFJLEtBQUssTUFBTSxFQUFFLDhCQUE4QixDQUFDLENBQUE7QUFDdEUsQ0FBQyxDQUFBO0FBRUQsZUFBZSxLQUFLLElBQUksRUFBRTtJQUN0QixVQUFVLENBQUMsWUFBWSxDQUFDLENBQUE7SUFDeEIsbUJBQW1CLEVBQUUsQ0FBQTtJQUNyQiwwQkFBMEIsRUFBRSxDQUFBO0FBQ2hDLENBQUMsQ0FBQSJ9

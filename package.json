@@ -10,8 +10,9 @@
     ],
     "type": "module",
     "scripts": {
-        "build": "tsc",
-        "test": "node ./test/compile.js"
+        "build": "tsc -p tsconfig.json",
+        "buildTests": "tsc -p test/tsconfig.json",
+        "test": "node ./test/index.js"
     },
     "keywords": [
         "rin",
