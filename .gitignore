@@ -4,3 +4,8 @@ node_modules/
 .vscode/
 .markdownlint.json
 assets/logo.ai
+
+# dist files made after builds
+lib/
+test/*.js
+**/dist/*.html
