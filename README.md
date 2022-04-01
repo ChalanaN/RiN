@@ -1,7 +1,7 @@
-![RiN](./assets/logo.png "RiN")
-
 <!-- omit in toc -->
-# RiN Compiler
+# RiN Compiler 🌺✨
+
+<img src="./assets/logo.png" alt="RiN" width="250px">
 
 Compiler for parsing custom HTML 🤖
 

@@ -3,3 +3,4 @@ node_modules/
 # Files used for development
 .vscode/
 .markdownlint.json
+assets/logo.ai
