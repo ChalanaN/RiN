@@ -1,6 +1,7 @@
 import { CompiledPageInfo, Compiler } from "../lib/index.js";
 import { DEFAULTS } from "../lib/common.js";
 import { __dirname } from "./utils.js";
+import tags from "./tags.js";
 import components from "./components.js";
 import appWidgets from "./appWidgets.js";
 import functionalWidgets from "./functionalWidgets.js";
@@ -9,6 +10,28 @@ export const { REGEXPS_FOR_TAGS: TAGS } = DEFAULTS
 
 // Information about tests 🧪
 export const testsInfo = {
+    tags: {
+        singleLineSelection: {
+            input: `<!-- <App.PageID/> -->`,
+            output: {
+                0: "<!-- <App.PageID/> -->",
+                1: "PageID"
+            }
+        },
+        multiLineSelection: {
+            input: `<!-- <Page.PageID>
+                        home
+                    </Page.PageID> -->`,
+            output: {
+                0: `<!-- <Page.PageID>
+                        home
+                    </Page.PageID> -->`,
+                1: "PageID",
+                2: "home"
+            }
+        }
+    },
+
     components: {
         attributes: {
             input: `<!-- <CustomComponent title="Title" description="This is the description" someJson="{ 'about': 'this is some example json', 'testArray': [ 0, 1, 2 ] }"/> -->`,
@@ -61,8 +84,9 @@ console.clear()
 
 // Do the tests 🧪
 compiler.once("ready", async () => {
-    console.log("\x1b[1m\x1b[96m%s\x1b[0m", "Starting Tests 🤖")
+    console.log("\x1b[1m\x1b[35m%s\x1b[0m", "Starting Tests 🌺✨")
 
+    await tags()
     await components()
     await appWidgets()
     await functionalWidgets()
