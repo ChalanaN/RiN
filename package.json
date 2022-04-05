@@ -1,7 +1,7 @@
 {
     "name": "rin-compiler",
-    "version": "1.0.0",
-    "description": "Compiler for parsing custom HTML 🤖",
+    "version": "1.0.1",
+    "description": "Compiler for compiling custom HTML 🤖",
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",
     "bin": "./bin/rin.js",

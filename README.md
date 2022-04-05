@@ -3,7 +3,7 @@
 
 <img src="./assets/logo.png" alt="RiN" width="250px">
 
-Compiler for parsing custom HTML 🤖
+Compiler for compiling custom HTML 🤖
 
 - [Installation](#installation)
 - [Features](#features)
