@@ -23,6 +23,10 @@ export default class RiNCompiler extends EventEmitter {
     /** Regular Expressions used for searching tags. DO NOT EDIT THIS UNTIL YOU KNOW WHAT YOU ARE DOING */
     #TAGS: typeof DEFAULTS.REGEXPS_FOR_TAGS;
 
+    /** Is the compiler ready to compile? 
+     * @readonly */
+    ready: boolean;
+
     /**
      * Creates a new compiler 🤖
      * @param {string} appView Path to the main view of the app. All other pages are compiled inside this view.
@@ -37,6 +41,7 @@ export default class RiNCompiler extends EventEmitter {
         this.options = { ...DEFAULTS.COMPILER_OPTIONS, ...options }
         this.Cache = {}
         this.Components = {}
+        this.ready = false
 
         ;(async () => {
             // Find the app view
@@ -59,6 +64,7 @@ export default class RiNCompiler extends EventEmitter {
                 (async () => { try { (await readdir(resolve(srcDir, "components"))).filter(v=>v.endsWith(".html")).map(v=>v.slice(0, v.length-5)).forEach(async v => (this.Components[v] = { html: (await readFile(resolve(srcDir, "components", v+".html"))).toString() })) } catch {} })()
             ])
 
+            this.ready = true
             this.emit("ready")
         })()
     }
