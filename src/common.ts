@@ -15,17 +15,15 @@ export const ERRORS = {
 }
 
 /** Compiler defaults */
-export const DEFAULTS: { REGEXPS_FOR_TAGS: { [x: string]: RegExp }, COMPILER_OPTIONS: RiNCompilerOptions } = {
+export const DEFAULTS = {
     /** Regular Expressions used to find tags */
     REGEXPS_FOR_TAGS: {
-        settings: /(?:<!--|\/\*) *<Page\.(?<property>[\w\.]*)>(?<value>.*)<\/Page.[\w\.]*> *(?:-->|\*\/)/g,
-        appWidgets: /(?:<!--|\/\*) *<App\.(?<property>[\w\.]*)\/> *(?:-->|\*\/)/g,
-        functionalWidgets: /(?:<!--|\/\*) *<App\.(?<property>[\w\.]*)>(?<value>.*)<\/App.[\w\.]*> *(?:-->|\*\/)/g,
-        files: /(?:<!--|\/\*) *<File:(?<filepath>[\w\.\/]*)\/> *(?:-->|\*\/)/g,
+        selfClosing: generateRegEx("", true),
+        pairs: generateRegEx(),
+        pageSettings: generateRegEx("Page"),
+        componentWidgets: generateRegEx("Component", true),
+        componentFunctionalWidgets: generateRegEx("Component"),
         imports: /(?:<!--|\/\*) *@Import (?<type>JS|CSS) \((?<src>.*)\) *(?:-->|\*\/)/g,
-        components: /(?:<!--|\/\*) *<(?<name>[\w\.]*)(?<attributes>.*)\/> *(?:-->|\*\/)/g,
-        componentWidgets: /(?:<!--|\/\*) *<Component\.(?<property>[\w\.]*)\/> *(?:-->|\*\/)/g,
-        componentFunctionalWidgets: /(?:<!--|\/\*) *<Component\.(?<property>[\w\.]*)>(?<value>.*)<\/Component.[\w\.]*> *(?:-->|\*\/)/g,
     },
 
     /** Defaults for options of {@link RiNCompiler} */
@@ -36,6 +34,13 @@ export const DEFAULTS: { REGEXPS_FOR_TAGS: { [x: string]: RegExp }, COMPILER_OPT
         functionalWidgets: { Run: (v, App) => eval(v) },
         CacheMaxAge: 60000
     }
+}
+
+export function generateRegEx(property: string = "", selfClosing: boolean = false) {
+    let tag_pairs = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>.*?)>(?<value>.*?)<\\/${property ? property + "." : property}(\\k<property>)>\\s*(?:-->|\\*\\/)`,
+        tag_selfClosing = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>[^>]*?)\\/>\\s*(?:-->|\\*\\/)`
+
+    return new RegExp(selfClosing?tag_selfClosing:tag_pairs, "gs")
 }
 
 

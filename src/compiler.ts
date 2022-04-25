@@ -85,38 +85,52 @@ export default class RiNCompiler extends EventEmitter {
             var { html: Page, title: Title, imports: Imports, ...widgets } = this.renderPage(page)
             var App = { html: this.Cache.App.html, Page, Title, Imports, ...widgets, ...this.options.appWidgets, ...this.options.functionalWidgets }
 
-            /* Widgets 🤖 */ {
+            let appWidget = (i: IteratorResult<RegExpMatchArray, any>) => {
+                try {
+                    App.html = App.html.replace(i.value[0], (i.value.groups.property.split(".").length > 2 ? eval(`App.${i.value.groups.property.replace(/^App\./, "")}`) : App[i.value.groups.property.replace(/^App\./, "")]) || "")
+                } catch {
+                    App.html = App.html.replace(i.value[0], App[i.value.groups.property] || "")
+                }
+            }, functionalWidget = (i: IteratorResult<RegExpMatchArray, any>) => {
+                try {
+                    App.html = App.html.replace(i.value[0], (i.value.groups.property.split(".").length > 2 ? eval(`App.${i.value.groups.property.replace(/^App\./, "")}`) : App[i.value.groups.property.replace(/^App\./, "")])?.(i.value.groups.value, App) || "")
+                } catch {
+                    App.html = App.html.replace(i.value[0], "")
+                }
+            }, filesWidget = async (i: IteratorResult<RegExpMatchArray, any>) => {
+                try {
+                    App.html = App.html.replace(i.value[0], (await readFile(resolve(this.srcDir, i.value.groups.attributes.trim().replace(/^:/, "")))).toString())
+                } catch (err) {
+                    throw new Error(ERRORS.Widgets.File.FILE_NOT_FOUND.concat("\n\n", err))
+                }
+            }, component = async (i: IteratorResult<RegExpMatchArray, any>) => {
+                try {
+                    App.html = App.html.replace(i.value[0], this.Components[i.value.groups.property] ? this.renderComponent(this.Components[i.value.groups.property].html, parseAttributes(i.value.groups.attributes)).html : "")
+                } catch (err) {
+                    App.html = App.html.replace(i.value[0], "")
+                }
+            }
+
+            {
                 var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
 
-                // App Widgets and Custom Widgets 🤖
-                iterator = App.html.matchAll(this.#TAGS.appWidgets)
-                do {
-                    i = iterator.next()
-                    try { !i.done && (App.html = App.html.replace(i.value[0], (i.value.groups.property.includes(".") ? eval(`App.${i.value.groups.property}`) : App[i.value.groups.property]) || "")) } catch { App.html = App.html.replace(i.value[0], App[i.value.groups.property] || "") }
-                } while (!i.done)
+                iterator = App.html.matchAll(this.#TAGS.selfClosing)
 
-                // Functional Widgets 🤖
-                iterator = App.html.matchAll(this.#TAGS.functionalWidgets)
-                do {
-                    i = iterator.next()
-                    try { !i.done && (App.html = App.html.replace(i.value[0], (i.value.groups.property.includes(".") ? eval(`App.${i.value.groups.property}`) : App[i.value.groups.property])?.(i.value.groups.value, App) || "")) } catch {}
-                } while (!i.done)
+                while (!(i = iterator.next()).done) {
+                        switch (i.value.groups.property.split(".")[0]) {
+                            case "App": appWidget(i); break;
+                            case "File": await filesWidget(i); break;
+                            default: component(i); break;
+                        }
+                }
 
-                // Files Widget 🤖
-                iterator = App.html.matchAll(this.#TAGS.files)
-                try {
-                    do {
-                        i = iterator.next()
-                        !i.done && (App.html = App.html.replace(i.value[0], (await readFile(resolve(this.srcDir, i.value.groups.filepath))).toString()))
-                    } while (!i.done)
-                } catch (err) { throw new Error(ERRORS.Widgets.File.FILE_NOT_FOUND.concat("\n\n", err)) }
+                iterator = App.html.matchAll(this.#TAGS.pairs)
 
-                // Components 🤖
-                iterator = App.html.matchAll(this.#TAGS.components)
-                do {
-                    i = iterator.next()
-                    !i.done && (App.html = App.html.replace(i.value[0], this.Components[i.value.groups.name] ? this.renderComponent(this.Components[i.value.groups.name].html, parseAttributes(i.value.groups.attributes)).html : ""))
-                } while (!i.done)
+                while (!(i = iterator.next()).done) {
+                        switch (i.value.groups.property.split(".")[0]) {
+                            case "App": functionalWidget(i); break;
+                        }
+                }
             }
 
             // Minify the file if specified
@@ -144,18 +158,16 @@ export default class RiNCompiler extends EventEmitter {
             var iterator: IterableIterator<RegExpMatchArray>, i: IteratorResult<RegExpMatchArray, any>
 
             // Widgets 🤖
-            iterator = html.matchAll(this.#TAGS.settings)
-            do {
-                i = iterator.next()
-                !i.done && (Page[i.value.groups.property] = i.value.groups.value) && (Page.html = Page.html.replace(i.value[0], ""))
-            } while (!i.done)
+            iterator = html.matchAll(this.#TAGS.pageSettings)
+            while (!(i = iterator.next()).done) {
+                (Page[i.value.groups.property] = i.value.groups.value) && (Page.html = Page.html.replace(i.value[0], ""))
+            }
 
             // Imports 📲
             iterator = html.matchAll(this.#TAGS.imports)
-            do {
-                i = iterator.next()
-                !i.done && Page.imports[i.value[1].toLowerCase()].push(i.value[2]) && (Page.html = Page.html.replace(i.value[0], ""))
-            } while (!i.done)
+            while (!(i = iterator.next()).done) {
+                Page.imports[i.value[1].toLowerCase()].push(i.value[2]) && (Page.html = Page.html.replace(i.value[0], ""))
+            }
         }
 
         Page.imports.cssTags = Page.imports.css.map(url => `<link rel="stylesheet" href="${url}" class="imports">`).join("")
@@ -182,17 +194,15 @@ export default class RiNCompiler extends EventEmitter {
 
             // Component Widgets 🤖
             iterator = component.html.matchAll(this.#TAGS.componentWidgets)
-            do {
-                i = iterator.next()
-                try { !i.done && (component.html = component.html.replace(i.value[0], i.value.groups.property.includes(".") ? eval(`component.${i.value.groups.property}`) : component[i.value.groups.property] || "")) } catch {}
-            } while (!i.done)
+            while (!(i = iterator.next()).done) {
+                try { (component.html = component.html.replace(i.value[0], i.value.groups.property.includes(".") ? eval(`component.${i.value.groups.property}`) : component[i.value.groups.property] || "")) } catch {}
+            }
 
             // Component Functional Widgets 🤖
             iterator = component.html.matchAll(this.#TAGS.componentFunctionalWidgets)
-            do {
-                i = iterator.next()
-                try { !i.done && (component.html = component.html.replace(i.value[0], (i.value.groups.property.includes(".") ? eval(`component.${i.value.groups.property}`) : component[i.value.groups.property])?.(i.value.groups.value, component) || "")) } catch {}
-            } while (!i.done)
+            while (!(i = iterator.next()).done) {
+                try { (component.html = component.html.replace(i.value[0], (i.value.groups.property.includes(".") ? eval(`component.${i.value.groups.property}`) : component[i.value.groups.property])?.(i.value.groups.value, component) || "")) } catch {}
+            }
         }
 
         return component
