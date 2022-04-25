@@ -4,6 +4,7 @@ node_modules/
 .vscode/
 .markdownlint.json
 assets/logo.ai
+.notes.txt
 
 # dist files made after builds
 lib/
