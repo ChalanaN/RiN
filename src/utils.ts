@@ -21,3 +21,17 @@ export const parseAttributes = (s: string): { [x: string]: string } => {
 
     return attributes
 }
+
+/**
+ * Modifies a number to the given length
+ */
+export const numFormat = (n: number, intLength?: number, decimalLength: number = 0): string => {
+    let [ intPart, decimalPart ] = (n.toString().includes(".") ? n : n.toFixed(1)).toString().split(".")
+
+    intPart.length < intLength && (intPart = "0".repeat(intLength - intPart.length) + intPart)
+
+    decimalPart.length < decimalLength && (decimalPart = decimalPart + "0".repeat(decimalLength - decimalPart.length))
+    decimalPart.length > decimalLength && (decimalPart = decimalPart.substring(0, decimalLength))
+
+    return decimalPart ? `${intPart}.${decimalPart}` : intPart
+}

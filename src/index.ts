@@ -2,6 +2,7 @@ import * as path from "path"
 import { readdir, readFile, writeFile } from "fs/promises"
 import RiNCompiler from "./compiler.js"
 import { RiNOptions, PageInfo } from "./common.js"
+import { numFormat } from "./utils.js"
 
 /**
  * Compiles all the files or selected files in a folder 💾
@@ -15,28 +16,29 @@ import { RiNOptions, PageInfo } from "./common.js"
  */
 export default async function RiN(srcDir: string, files: string[] | "all" = "all", appView?: string | "default", options?: RiNOptions) {
     var times = []
-    const log = (msg: string) => times.push(performance.now()) && console.log(`[${times.at(-1)}] ${msg}`)
-    log("Starting RiN 🤖")
+    const log = (msg: string) => times.push(performance.now()) && console.log(`[\x1b[90m${numFormat(times.at(-1), 5, 10)}\x1b[0m] ${msg}`)
+    log("\x1b[1m\x1b[35mStarting RiN 🌺✨\x1b[0m")
 
     const compiler: RiNCompiler = new RiNCompiler(srcDir, appView, options)
 
     compiler.on("ready", async () => {
-        log(`Compiler is ready in ${performance.now() - times.at(-1)}`)
+        log(`Compiler is ready in \x1b[92m${performance.now() - times.at(-1)} ms\x1b[0m`)
 
         // Get rid of type "all" as the files parameter 🚫
         "all"==files&&(files=(await readdir(srcDir)).filter(f=>/\.html$/.test(f)&&"App.html"!=f))
 
-        log(`Starting compiling the files after ${performance.now() - times.at(-1)}`)
+        log(`Starting compiling the files after \x1b[92m${performance.now() - times.at(-1)} ms\x1b[0m`)
 
         // Compile the files
         await Promise.all(files.map(async (f) => {
-            log(`Compiling file : ${f}`)
+            let startTime = performance.now()
+            log(`🔄 Compiling file \x1b[90m=> \x1b[96m${f}\x1b[0m`)
             let file = await readFile(path.resolve(srcDir, f))
             await writeFile(path.resolve(options?.outDir || srcDir, f), (await compiler.compile(file.toString())).html)
-            log(`Done compiling : ${f} : ${performance.now() - times.at(-1)}`)
+            log(`✅ Done compiling \x1b[90m=> \x1b[96m${f}\x1b[0m \x1b[90m=> \x1b[92m${performance.now() - startTime} ms\x1b[0m`)
         }))
 
-        log(`Done compiling in ${performance.now() - times[0]} milliseconds`)
+        log(`Done compiling in \x1b[92m${performance.now() - times[0]} ms\x1b[0m`)
     })
 }
 
