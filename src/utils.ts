@@ -35,3 +35,17 @@ export const numFormat = (n: number, intLength?: number, decimalLength: number =
 
     return decimalPart ? `${intPart}.${decimalPart}` : intPart
 }
+
+export function removeUndefined(o: object) {
+    // @ts-ignore
+    return Object.keys(o).forEach(k => o[k] ?? delete o[k]) || o
+}
+
+/**
+ * Returns the passed value if it's type is the expected type. Otherwise, returns `undefined`
+ * @param v Value to check
+ * @param t Expected type
+ */
+export function singleTypeOnly(v: any, t: "undefined" | "object" | "boolean" | "number" | "bigint" | "string" | "symbol" | "function") {
+    return (t == typeof v && v)
+}
