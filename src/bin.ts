@@ -4,9 +4,7 @@ import * as path from "path"
 import { readdir, readFile, writeFile } from "fs/promises"
 import RiNCompiler from "./compiler.js"
 import { RiNOptions, PageInfo } from "./common.js"
-import { numFormat, removeUndefined, singleTypeOnly } from "./utils.js"
-
-type TokenList<T> = { [x: string]: T }
+import { numFormat, removeUndefined, singleTypeOnly, TokenList, Types } from "./utils.js"
 
 const flags: TokenList<string | true> = {},
     aliases: TokenList<string> = {

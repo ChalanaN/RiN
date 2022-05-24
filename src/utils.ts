@@ -1,3 +1,15 @@
+export interface Types {
+    undefined: undefined,
+    object: object,
+    boolean: boolean,
+    number: number,
+    bigint: bigint,
+    string: string,
+    symbol: symbol
+}
+
+export type TokenList<T> = { [x: string]: T }
+
 /**
  * Minify HTML 🗜
  * @param {string} html HTML to be minified
@@ -46,6 +58,6 @@ export function removeUndefined(o: object) {
  * @param v Value to check
  * @param t Expected type
  */
-export function singleTypeOnly(v: any, t: "undefined" | "object" | "boolean" | "number" | "bigint" | "string" | "symbol" | "function") {
+export function singleTypeOnly<T extends keyof Types>(v: any, t: T): Types[T] | undefined {
     return (t == typeof v && v)
 }
