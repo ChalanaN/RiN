@@ -8,7 +8,11 @@ export interface Types {
     symbol: symbol
 }
 
-export type TokenList<T> = { [x: string]: T }
+export type TokenList<T, K extends string = string> = {
+    [x in K]: T
+}
+
+export const asType = <M>() => <T extends M>(a: T): T => a
 
 /**
  * Minify HTML 🗜
