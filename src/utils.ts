@@ -52,9 +52,11 @@ export const numFormat = (n: number, intLength?: number, decimalLength: number =
     return decimalPart ? `${intPart}.${decimalPart}` : intPart
 }
 
-export function removeUndefined(o: object) {
-    // @ts-ignore
-    return Object.keys(o).forEach(k => o[k] ?? delete o[k]) || o
+/**
+ * Returns the object without parameters which has a value of `null` or `undefined`
+ */
+export function removeUndefined<T extends {}>(o: T): T {
+    return Object.keys(o).forEach(k => o[k] ?? delete o[k]) as undefined || o
 }
 
 /**
