@@ -122,46 +122,48 @@ process.argv.slice(2).forEach(v => {
     }
 })
 
+console.log("\x1b[1m\x1b[35mStarting RiN 🌺✨\x1b[0m", "\n")
+
 compile()
 
-function compile() {
+async function compile() {
     var times: number[] = []
+
     // Flags 🚩
-    let files: string | string[] = stringOnly(options.files.value) || "all",
-        srcDir = options["src-dir"].value || process.env.PWD,
+    let srcDir = options["src-dir"].value || process.env.PWD,
         outDir = options["out-dir"].value || process.env.PWD,
-        compilerOptions: RiNCompilerOptions = removeUndefined({
-            title: options.title.value,
-            minify: options.minify.value
-        })
+        files = stringOnly(options.files.value) || "all" as string | string[]
 
     // Fixing the relative paths
     !path.isAbsolute(srcDir) && (srcDir = path.resolve(process.env.PWD, srcDir))
     !path.isAbsolute(outDir) && (outDir = path.resolve(process.env.PWD, outDir))
 
+    // Parse files
     "string" == typeof files && files.includes(",") && (files = files.split(","))
+    // Get rid of type "all" as the files parameter
+    if ("all" == files) {
+        files = (await readdir(srcDir)).filter(f => /\.html$/.test(f) && "App.html" != f)
+    } if (typeof files == "string") files = [files]
 
-    log("\x1b[1m\x1b[35mStarting RiN 🌺✨\x1b[0m")
+    let compilerOptions = removeUndefined(<RiNCompilerOptions>{
+        title: options.title.value,
+        minify: options.minify.value
+    })
 
     const compiler = new RiNCompiler(srcDir, stringOnly(options["app-view"]) || "default", compilerOptions)
 
     compiler.on("ready", async () => {
         log(`Compiler is ready in \x1b[92m${performance.now() - times.at(-1)} ms\x1b[0m`)
 
-        // Get rid of type "all" as the files parameter 🚫
-        "all" == files && (files = (await readdir(srcDir)).filter(f => /\.html$/.test(f) && "App.html" != f))
-        typeof files == "string" && (files = [files])
-
-        log(`Starting compiling the files after \x1b[92m${performance.now() - times.at(-1)} ms\x1b[0m`)
-
         // Compile the files
-        await Promise.all(files.map(async f => {
+        await Promise.all((files as string[]).map(async f => {
             let startTime = performance.now()
 
             log(`🔄 Compiling file \x1b[90m=> \x1b[96m${f}\x1b[0m`)
 
             let file = await readFile(path.resolve(srcDir, f))
             await writeFile(path.resolve(outDir || srcDir, f), (await compiler.compile(file.toString())).html)
+        
             log(`✅ Done compiling \x1b[90m=> \x1b[96m${f}\x1b[0m \x1b[90m=> \x1b[92m${performance.now() - startTime} ms\x1b[0m`)
         }))
 
