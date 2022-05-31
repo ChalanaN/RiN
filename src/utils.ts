@@ -67,3 +67,14 @@ export function removeUndefined<T extends {}>(o: T): T {
 export function singleTypeOnly<T extends keyof Types>(v: any, t: T): Types[T] | undefined {
     return (t == typeof v && v)
 }
+
+export function debounce(cb: (...args: any) => void, delay = 1000) {
+    let timeout: NodeJS.Timeout
+
+    return (...args: any) => {
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+            cb(...args)
+        }, delay)
+    }
+}
