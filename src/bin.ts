@@ -6,7 +6,7 @@ import RiNCompiler from "./compiler.js"
 import { asType, numFormat, removeUndefined, singleTypeOnly, TokenList, Types } from "./utils.js"
 import { RiNCompilerOptions } from "./common.js"
 
-const error = {
+const ERROR = {
     notAssignable(value: string, type: keyof Types) {
         console.error(`\x1b[1mBad Option:\x1b[0m ${value} is not assignable to the type of ${type}`)
     },
@@ -88,7 +88,7 @@ function addOption(optionName: keyof typeof options, value: string | undefined) 
 function addFlag(s: string) {
     let [flag, value] = s.split("=")
 
-    if (!options[flag]) throw error.unknownOption(flag)
+    if (!options[flag]) throw ERROR.unknownOption(flag)
 
     addOption(flag as keyof typeof options, value)
 }
@@ -106,7 +106,7 @@ function parseBooleanOption(value: string | undefined): boolean {
     if (value == "0" || value == "false") return false
     if (value == "1" || value == "true" || value == undefined) return true
 
-    throw error.notAssignable(value, "boolean")
+    throw ERROR.notAssignable(value, "boolean")
 }
 
 function stringOnly(v: any): string | undefined {
