@@ -180,7 +180,7 @@ async function compile() {
 
     function log(msg: string, ...args: string[]) {
         times.push(performance.now())
-        console.log(`[\x1b[90m${numFormat(times.at(-1), 5, 10)}\x1b[0m] ${msg}`)
+        console.log(`[\x1b[90m${new Date().toLocaleTimeString()}\x1b[0m] ${msg}`)
         args.forEach(m => console.log(m))
     }
 }
