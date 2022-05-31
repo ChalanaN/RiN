@@ -13,6 +13,12 @@ const ERROR = {
     unknownOption(option: string) {
         console.error(`\x1b[1mBad Option:\x1b[0m ${option} is an unknown to be passed`)
     }
+}, MSG = {
+    start: () => "\x1b[1m\x1b[35mStarting RiN 🌺✨\x1b[0m",
+    ready: (t: number) => `Compiler is ready in \x1b[92m${t} ms\x1b[0m`,
+    compilingFile: (f: string) => `🔄 Compiling file \x1b[90m=> \x1b[96m${f}\x1b[0m`,
+    compiledFile: (f: string, t: number) => `✅ Done compiling \x1b[90m=> \x1b[96m${f}\x1b[0m \x1b[90m=> \x1b[92m${t} ms\x1b[0m`,
+    doneCompiling: (t: number) => `Done compiling in \x1b[92m${t} ms\x1b[0m`,
 }
 
 interface Option<T extends keyof Types> {
@@ -122,7 +128,8 @@ process.argv.slice(2).forEach(v => {
     }
 })
 
-console.log("\x1b[1m\x1b[35mStarting RiN 🌺✨\x1b[0m", "\n")
+console.clear()
+console.log(MSG.start(), "\n")
 
 compile()
 
@@ -153,24 +160,27 @@ async function compile() {
     const compiler = new RiNCompiler(srcDir, stringOnly(options["app-view"]) || "default", compilerOptions)
 
     compiler.on("ready", async () => {
-        log(`Compiler is ready in \x1b[92m${performance.now() - times.at(-1)} ms\x1b[0m`)
+        log(MSG.ready(performance.now()), "")
 
         // Compile the files
         await Promise.all((files as string[]).map(async f => {
             let startTime = performance.now()
 
-            log(`🔄 Compiling file \x1b[90m=> \x1b[96m${f}\x1b[0m`)
+            log(MSG.compilingFile(f))
 
             let file = await readFile(path.resolve(srcDir, f))
             await writeFile(path.resolve(outDir || srcDir, f), (await compiler.compile(file.toString())).html)
         
-            log(`✅ Done compiling \x1b[90m=> \x1b[96m${f}\x1b[0m \x1b[90m=> \x1b[92m${performance.now() - startTime} ms\x1b[0m`)
+            log(MSG.compiledFile(f, performance.now() - startTime))
         }))
 
-        log(`Done compiling in \x1b[92m${performance.now() - times[0]} ms\x1b[0m`)
+        console.log()
+        log(MSG.doneCompiling(performance.now() - times[0]))
     })
 
-    function log(msg: string) {
-        times.push(performance.now()) && console.log(`[\x1b[90m${numFormat(times.at(-1), 5, 10)}\x1b[0m] ${msg}`)
+    function log(msg: string, ...args: string[]) {
+        times.push(performance.now())
+        console.log(`[\x1b[90m${numFormat(times.at(-1), 5, 10)}\x1b[0m] ${msg}`)
+        args.forEach(m => console.log(m))
     }
 }
