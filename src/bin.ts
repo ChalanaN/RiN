@@ -3,8 +3,10 @@
 import * as path from "path"
 import { readdir, readFile, writeFile } from "fs/promises"
 import RiNCompiler from "./compiler.js"
-import { asType, numFormat, removeUndefined, singleTypeOnly, TokenList, Types } from "./utils.js"
+import { asType, debounce, numFormat, removeUndefined, singleTypeOnly, TokenList, Types } from "./utils.js"
 import { RiNCompilerOptions } from "./common.js"
+import { watch } from "fs"
+import { resolve } from "path"
 
 const ERROR = {
     notAssignable(value: string, type: keyof Types) {
@@ -19,6 +21,7 @@ const ERROR = {
     compilingFile: (f: string) => `🔄 Compiling file \x1b[90m=> \x1b[96m${f}\x1b[0m`,
     compiledFile: (f: string, t: number) => `✅ Done compiling \x1b[90m=> \x1b[96m${f}\x1b[0m \x1b[90m=> \x1b[92m${t} ms\x1b[0m`,
     doneCompiling: (t: number) => `Done compiling in \x1b[92m${t} ms\x1b[0m`,
+    watching: () => "👀 Watching for file changes..."
 }
 
 interface Option<T extends keyof Types> {
@@ -128,22 +131,22 @@ process.argv.slice(2).forEach(v => {
     }
 })
 
+// Flags 🚩
+let srcDir = options["src-dir"].value || process.env.PWD,
+    outDir = options["out-dir"].value || process.env.PWD,
+    files = stringOnly(options.files.value) || "all" as string | string[]
+
+// Fixing the relative paths
+!path.isAbsolute(srcDir) && (srcDir = path.resolve(process.env.PWD, srcDir))
+!path.isAbsolute(outDir) && (outDir = path.resolve(process.env.PWD, outDir))
+
 console.clear()
 console.log(MSG.start(), "\n")
 
 compile()
 
 async function compile() {
-    var times: number[] = []
-
-    // Flags 🚩
-    let srcDir = options["src-dir"].value || process.env.PWD,
-        outDir = options["out-dir"].value || process.env.PWD,
-        files = stringOnly(options.files.value) || "all" as string | string[]
-
-    // Fixing the relative paths
-    !path.isAbsolute(srcDir) && (srcDir = path.resolve(process.env.PWD, srcDir))
-    !path.isAbsolute(outDir) && (outDir = path.resolve(process.env.PWD, outDir))
+    let times: number[] = []
 
     // Parse files
     "string" == typeof files && files.includes(",") && (files = files.split(","))
@@ -157,25 +160,46 @@ async function compile() {
         minify: options.minify.value
     })
 
-    const compiler = new RiNCompiler(srcDir, stringOnly(options["app-view"]) || "default", compilerOptions)
+    const compiler = new RiNCompiler(srcDir, options["app-view"].value || "default", compilerOptions)
 
-    compiler.on("ready", async () => {
-        log(MSG.ready(performance.now()), "")
+    async function compileFiles(filesToCompile?: string[]) {
+        filesToCompile = filesToCompile || files as string[]
+        console.log()
 
-        // Compile the files
-        await Promise.all((files as string[]).map(async f => {
+        await Promise.all(filesToCompile.map(async f => {
             let startTime = performance.now()
 
             log(MSG.compilingFile(f))
 
             let file = await readFile(path.resolve(srcDir, f))
             await writeFile(path.resolve(outDir || srcDir, f), (await compiler.compile(file.toString())).html)
-        
+
             log(MSG.compiledFile(f, performance.now() - startTime))
         }))
 
         console.log()
         log(MSG.doneCompiling(performance.now() - times[0]))
+
+        if (options.watch.value) {
+            console.log()
+            log(MSG.watching())
+        }
+    }
+
+    compiler.on("ready", async () => {
+        log(MSG.ready(performance.now()))
+
+        await compileFiles()
+
+        if (options.watch.value) {
+            let compileFile = debounce(filename => compileFiles([ filename ]), 250);
+
+            (files as string[]).forEach(filename => {
+                watch(resolve(srcDir, filename), () => {
+                    compileFile(filename)
+                })
+            })
+        }
     })
 
     function log(msg: string, ...args: string[]) {
