@@ -1,3 +1,7 @@
+import { PathLike } from "fs"
+import { readdir, stat } from "fs/promises"
+import { resolve } from "path"
+
 export interface Types {
     undefined: undefined,
     object: object,
@@ -77,4 +81,22 @@ export function debounce(cb: (...args: any) => void, delay = 1000) {
             cb(...args)
         }, delay)
     }
+}
+
+export async function getAllFiles(directory: string) {
+    let filesAndDirectories = (await readdir(directory)).map(filename => resolve(directory, filename)),
+        files: string[] = []
+
+    await Promise.all(filesAndDirectories.map(async pathname => {
+        if ((await stat(pathname)).isDirectory()) {
+            try {
+                files = files.concat(await getAllFiles(resolve(directory, pathname)))
+            } catch { }
+        } else {
+            files.push(pathname)
+        }
+    }))
+
+    files = files.sort()
+    return files
 }

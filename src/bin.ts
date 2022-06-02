@@ -3,10 +3,10 @@
 import * as path from "path"
 import { readdir, readFile, writeFile } from "fs/promises"
 import RiNCompiler from "./compiler.js"
-import { asType, debounce, numFormat, removeUndefined, singleTypeOnly, TokenList, Types } from "./utils.js"
+import { asType, debounce, getAllFiles, removeUndefined, singleTypeOnly, TokenList, Types } from "./utils.js"
 import { RiNCompilerOptions } from "./common.js"
 import { watch } from "fs"
-import { resolve } from "path"
+import { relative, resolve } from "path"
 
 const ERROR = {
     notAssignable(value: string, type: keyof Types) {
@@ -163,6 +163,7 @@ async function compile() {
     const compiler = new RiNCompiler(srcDir, options["app-view"].value || "default", compilerOptions)
 
     async function compileFiles(filesToCompile?: string[]) {
+        let compilerStartTime = performance.now()
         filesToCompile = filesToCompile || files as string[]
         console.log()
 
@@ -172,13 +173,13 @@ async function compile() {
             log(MSG.compilingFile(f))
 
             let file = await readFile(path.resolve(srcDir, f))
-            await writeFile(path.resolve(outDir || srcDir, f), (await compiler.compile(file.toString())).html)
+            await writeFile(path.resolve(outDir, f), (await compiler.compile(file.toString())).html)
 
             log(MSG.compiledFile(f, performance.now() - startTime))
         }))
 
         console.log()
-        log(MSG.doneCompiling(performance.now() - times[0]))
+        log(MSG.doneCompiling(performance.now() - compilerStartTime))
 
         if (options.watch.value) {
             console.log()
@@ -192,11 +193,11 @@ async function compile() {
         await compileFiles()
 
         if (options.watch.value) {
-            let compileFile = debounce(filename => compileFiles([ filename ]), 250);
+            let compileFilesDebounce = debounce(compileFiles, 250);
 
-            (files as string[]).forEach(filename => {
+            (await getAllFiles(srcDir)).forEach(filename => {
                 watch(resolve(srcDir, filename), () => {
-                    compileFile(filename)
+                    compileFilesDebounce( files.includes(relative(srcDir, filename)) ? [ relative(srcDir, filename) ] : undefined )
                 })
             })
         }
