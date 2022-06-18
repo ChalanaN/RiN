@@ -84,19 +84,24 @@ export function debounce(cb: (...args: any) => void, delay = 1000) {
 }
 
 export async function getAllFiles(directory: string) {
-    let filesAndDirectories = (await readdir(directory)).map(filename => resolve(directory, filename)),
-        files: string[] = []
+    let files: string[] = [];
+    
+    async function getFiles(dir: string) {
+        let filesAndDirectories = (await readdir(dir)).map(filename => resolve(dir, filename))
 
-    await Promise.all(filesAndDirectories.map(async pathname => {
-        if ((await stat(pathname)).isDirectory()) {
-            try {
-                files = files.concat(await getAllFiles(resolve(directory, pathname)))
-            } catch { }
-        } else {
-            files.push(pathname)
-        }
-    }))
+        await Promise.all(filesAndDirectories.map(async (pathname) => {
+            if ((await stat(pathname)).isDirectory()) {
+                try {
+                    return await getFiles(pathname)
+                }
+                catch { }
+            } else {
+                return files.push(pathname)
+            }
+        }));
+    }
 
-    files = files.sort()
+    await getFiles(directory)
+
     return files
 }
