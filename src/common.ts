@@ -37,8 +37,8 @@ export const DEFAULTS = {
 }
 
 export function generateRegEx(property: string = "", selfClosing: boolean = false) {
-    let tag_pairs = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>.*?)>(?<value>.*?)<\\/${property ? property + "." : property}(\\k<property>)>\\s*(?:-->|\\*\\/)`,
-        tag_selfClosing = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>[^>]*?)\\/>\\s*(?:-->|\\*\\/)`
+    let tag_pairs = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>.*?)>(?<value>.*?)<\\/${property ? property + "." : property}(\\k<property>)>\\s*?(?:-->|\\*\\/)`,
+        tag_selfClosing = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>[^>]*?)\\/>\\s*?(?:-->|\\*\\/)`
 
     return new RegExp(selfClosing?tag_selfClosing:tag_pairs, "gs")
 }
