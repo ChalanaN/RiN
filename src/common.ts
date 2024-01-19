@@ -23,7 +23,7 @@ export const DEFAULTS = {
         pageSettings: generateRegEx("Page"),
         componentWidgets: generateRegEx("Component", true),
         componentFunctionalWidgets: generateRegEx("Component"),
-        imports: /(?:<!--|\/\*) *@Import (?<type>JS|CSS) \((?<src>.*)\) *(?:-->|\*\/)/g,
+        imports: /(?:<!--|\/\*) *@Import (?<type>JS|CSS) \((?<src>.*)\) *(?:-->|\*\/)/,
     },
 
     /** Defaults for options of {@link RiNCompiler} */
@@ -37,10 +37,10 @@ export const DEFAULTS = {
 }
 
 export function generateRegEx(property: string = "", selfClosing: boolean = false) {
-    let tag_pairs = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>.*?)>(?<value>.*?)<\\/${property ? property + "." : property}(\\k<property>)>\\s*?(?:-->|\\*\\/)`,
-        tag_selfClosing = `(?:<!--|\\/\\*)\\s*<${property ? property + "." : property}(?<property>[\\w\\.]*)(?<attributes>[^>]*?)\\/>\\s*?(?:-->|\\*\\/)`
+    let tag_pairs = `(?:<!--|\\/\\*)\\s*?<${property ? property + "\\." : property}(?<property>[\\w\\.]*)(?<attributes>.*?)>(?<value>.*?)<\\/${property ? property + "\\." : property}(\\k<property>)>\\s*?(?:-->|\\*\\/)`,
+        tag_selfClosing = `(?:<!--|\\/\\*)\\s*?<${property ? property + "\\." : property}(?<property>[\\w\\.]*)(?<attributes>[^>]*)\\/>\\s*?(?:-->|\\*\\/)`
 
-    return new RegExp(selfClosing?tag_selfClosing:tag_pairs, "gs")
+    return new RegExp(selfClosing?tag_selfClosing:tag_pairs, "s")
 }
 
 
