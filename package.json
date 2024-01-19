@@ -48,6 +48,6 @@
         "node": ">=14.0.0"
     },
     "devDependencies": {
-        "@types/node": "^17.0.16"
+        "@types/node": "^20.10.6"
     }
 }
