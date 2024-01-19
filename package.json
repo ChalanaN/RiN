@@ -5,7 +5,7 @@
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",
     "bin": {
-        "rin": "./lib/bin.js"
+        "rin": "lib/bin.js"
     },
     "files": [
         "lib/*"
@@ -38,7 +38,7 @@
     "homepage": "https://github.com/ChalanaN/RiN",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ChalanaN/RiN.git"
+        "url": "git+https://github.com/ChalanaN/RiN.git"
     },
     "bugs": {
         "email": "wchalanaw@gmail.com",
