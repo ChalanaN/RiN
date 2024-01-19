@@ -87,27 +87,27 @@ export default class RiNCompiler extends EventEmitter {
 
             let appWidget = (i: RegExpExecArray) => {
                 try {
-                    App.html = App.html.replace(i[0], App[i.groups.property.replace(/^App\./, "")] || eval(`App.${i.groups.property.replace(/^App\./, "")}`) || "")
+                    App.html = App.html.slice(0, i?.index) + (App[i.groups.property.replace(/^App\./, "")] || eval(`App.${i.groups.property.replace(/^App\./, "")}`) || "") + App.html.slice(i.index + i[0].length)
                 } catch {
-                    App.html = App.html.replace(i[0], App[i.groups.property] || "")
+                    App.html = App.html.slice(0, i?.index) + (App[i.groups.property] || "") + App.html.slice(i.index + i[0].length)
                 }
             }, functionalWidget = (i: RegExpExecArray) => {
                 try {
-                    App.html = App.html.replace(i[0], (App[i.groups.property.replace(/^App\./, "")] || eval(`App.${i.groups.property.replace(/^App\./, "")}`))?.(i.groups.value, App) || "")
+                    App.html = App.html.slice(0, i?.index) + ((App[i.groups.property.replace(/^App\./, "")] || eval(`App.${i.groups.property.replace(/^App\./, "")}`))?.(i.groups.value, App) || "") + App.html.slice(i.index + i[0].length)
                 } catch {
-                    App.html = App.html.replace(i[0], "")
+                    App.html = App.html.slice(0, i?.index) + (App[i.groups.property] || "") + App.html.slice(i.index + i[0].length)
                 }
             }, filesWidget = async (i: RegExpExecArray) => {
                 try {
-                    App.html = App.html.replace(i[0], (await readFile(resolve(this.srcDir, i.groups.attributes.trim().replace(/^:/, "")))).toString())
+                    App.html = App.html.slice(0, i?.index) + (await readFile(resolve(this.srcDir, i.groups.attributes.trim().replace(/^:/, "")))).toString() + App.html.slice(i.index + i[0].length)
                 } catch (err) {
                     throw new Error(ERRORS.Widgets.File.FILE_NOT_FOUND.concat("\n\n", err))
                 }
             }, component = (i: RegExpExecArray) => {
                 try {
-                    App.html = App.html.replace(i[0], this.Components[i.groups.property] ? this.renderComponent(this.Components[i.groups.property].html, parseAttributes(i.groups.attributes)).html : "")
+                    App.html = App.html.slice(0, i?.index) + (this.Components[i.groups.property] ? this.renderComponent(this.Components[i.groups.property].html, parseAttributes(i.groups.attributes)).html : "") + App.html.slice(i.index + i[0].length)
                 } catch (err) {
-                    App.html = App.html.replace(i[0], "")
+                    App.html = App.html.slice(0, i?.index) + (App[i.groups.property] || "") + App.html.slice(i.index + i[0].length)
                 }
             };
 
